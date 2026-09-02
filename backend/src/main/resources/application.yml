@@ -1,0 +1,15 @@
+server:
+  port: 3001
+
+spring:
+  application:
+    name: pdf2q-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+deepseek:
+  api-key: ${DEEPSEEK_API_KEY:}
+  base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+  model: ${DEEPSEEK_MODEL:deepseek-chat}
+  # Max characters sent to the model from extracted PDF text
+  max-text-chars: 60000

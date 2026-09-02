@@ -1,0 +1,5 @@
+# Copy this file to application-local.yml and fill in your key.
+# application-local.yml is gitignored.
+
+deepseek:
+  api-key: sk-your-key-here
