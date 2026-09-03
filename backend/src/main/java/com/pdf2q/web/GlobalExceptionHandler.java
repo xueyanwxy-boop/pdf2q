@@ -10,9 +10,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * 全局异常处理：把各类异常统一成 {@code {"error":"..."}}，方便前端展示。
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+  /** 处理请求体校验失败（如 @NotBlank）。 */
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
     String message = ex.getBindingResult().getFieldErrors().stream()
@@ -21,6 +25,7 @@ public class GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(new ErrorResponse(message));
   }
 
+  /** 处理业务里主动抛出的 ResponseStatusException（含 4xx/5xx 原因文案）。 */
   @ExceptionHandler(ResponseStatusException.class)
   public ResponseEntity<ErrorResponse> handleStatus(ResponseStatusException ex) {
     HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
@@ -31,6 +36,7 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(status).body(new ErrorResponse(reason));
   }
 
+  /** 兜底：未分类异常返回 500。 */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleOther(Exception ex) {
     return ResponseEntity.internalServerError()

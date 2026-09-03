@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdf2q.mapper.QuizProgressMapper">
+
+  <resultMap id="ProgressMap" type="com.pdf2q.domain.QuizProgress">
+    <id property="id" column="id"/>
+    <result property="ownerToken" column="owner_token"/>
+    <result property="quizSetId" column="quiz_set_id"/>
+    <result property="currentIndex" column="current_index"/>
+    <result property="answersJson" column="answers_json"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <select id="selectByOwnerAndQuizSet" resultMap="ProgressMap">
+    SELECT id, owner_token, quiz_set_id, current_index, answers_json, updated_at
+    FROM quiz_progress
+    WHERE owner_token = #{ownerToken} AND quiz_set_id = #{quizSetId}
+  </select>
+
+  <select id="selectByOwnerAndQuizSetIds" resultMap="ProgressMap">
+    SELECT id, owner_token, quiz_set_id, current_index, answers_json, updated_at
+    FROM quiz_progress
+    WHERE owner_token = #{ownerToken}
+      AND quiz_set_id IN
+    <foreach collection="quizSetIds" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    INSERT INTO quiz_progress (
+      owner_token, quiz_set_id, current_index, answers_json, updated_at
+    ) VALUES (
+      #{ownerToken}, #{quizSetId}, #{currentIndex}, #{answersJson}, #{updatedAt}
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE quiz_progress
+    SET current_index = #{currentIndex},
+        answers_json = #{answersJson},
+        updated_at = #{updatedAt}
+    WHERE id = #{id}
+  </update>
+
+  <delete id="deleteByOwnerAndQuizSet">
+    DELETE FROM quiz_progress
+    WHERE owner_token = #{ownerToken} AND quiz_set_id = #{quizSetId}
+  </delete>
+
+  <delete id="deleteByQuizSetId">
+    DELETE FROM quiz_progress WHERE quiz_set_id = #{quizSetId}
+  </delete>
+</mapper>

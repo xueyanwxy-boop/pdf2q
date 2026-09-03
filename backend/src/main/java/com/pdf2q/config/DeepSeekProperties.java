@@ -2,6 +2,7 @@ package com.pdf2q.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/** DeepSeek API 配置项，对应 application.yml 中的 {@code deepseek.*}。 */
 @ConfigurationProperties(prefix = "deepseek")
 public class DeepSeekProperties {
 

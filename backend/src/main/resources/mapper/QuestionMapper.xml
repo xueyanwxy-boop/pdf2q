@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdf2q.mapper.QuestionMapper">
+
+  <resultMap id="QuestionMap" type="com.pdf2q.domain.Question">
+    <id property="id" column="id"/>
+    <result property="quizSetId" column="quiz_set_id"/>
+    <result property="seq" column="seq"/>
+    <result property="type" column="question_type"
+            javaType="com.pdf2q.domain.QuestionType"/>
+    <result property="stem" column="stem"/>
+    <result property="optionA" column="option_a"/>
+    <result property="optionB" column="option_b"/>
+    <result property="optionC" column="option_c"/>
+    <result property="optionD" column="option_d"/>
+    <result property="answer" column="answer"/>
+    <result property="explanation" column="explanation"/>
+  </resultMap>
+
+  <insert id="insertBatch">
+    INSERT INTO questions (
+      quiz_set_id, seq, question_type, stem,
+      option_a, option_b, option_c, option_d,
+      answer, explanation
+    ) VALUES
+    <foreach collection="list" item="item" separator=",">
+      (
+        #{item.quizSetId}, #{item.seq}, #{item.type}, #{item.stem},
+        #{item.optionA}, #{item.optionB}, #{item.optionC}, #{item.optionD},
+        #{item.answer}, #{item.explanation}
+      )
+    </foreach>
+  </insert>
+
+  <select id="selectByQuizSetId" resultMap="QuestionMap">
+    SELECT id, quiz_set_id, seq, question_type, stem,
+           option_a, option_b, option_c, option_d, answer, explanation
+    FROM questions
+    WHERE quiz_set_id = #{quizSetId}
+    ORDER BY seq ASC
+  </select>
+
+  <delete id="deleteByQuizSetId">
+    DELETE FROM questions WHERE quiz_set_id = #{quizSetId}
+  </delete>
+</mapper>

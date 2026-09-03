@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdf2q.mapper.QuizSetMapper">
+
+  <resultMap id="QuizSetMap" type="com.pdf2q.domain.QuizSet">
+    <id property="id" column="id"/>
+    <result property="ownerToken" column="owner_token"/>
+    <result property="title" column="title"/>
+    <result property="questionCount" column="question_count"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    INSERT INTO quiz_sets (owner_token, title, question_count, created_at)
+    VALUES (#{ownerToken}, #{title}, #{questionCount}, #{createdAt})
+  </insert>
+
+  <select id="selectByOwnerToken" resultMap="QuizSetMap">
+    SELECT id, owner_token, title, question_count, created_at
+    FROM quiz_sets
+    WHERE owner_token = #{ownerToken}
+    ORDER BY created_at DESC
+  </select>
+
+  <select id="selectByIdAndOwnerToken" resultMap="QuizSetMap">
+    SELECT id, owner_token, title, question_count, created_at
+    FROM quiz_sets
+    WHERE id = #{id} AND owner_token = #{ownerToken}
+  </select>
+
+  <delete id="deleteById">
+    DELETE FROM quiz_sets WHERE id = #{id}
+  </delete>
+</mapper>

@@ -1,52 +1,40 @@
-# 架构说明（v0.1）
+# 架构说明（v0.2）
 
-## 总体流程
+## 流程
 
 ```text
-用户上传 PDF
-    ↓
-浏览器 pdf.js 抽取纯文本
-    ↓
-POST /api/generate  { text, count }
-    ↓
-Spring Boot 后端拼装 Prompt
-    ↓
-DeepSeek Chat API
-    ↓
-校验并返回 questions[]
-    ↓
-Vue 答题页：选题 → 反馈 → 解析 → 计分
+打开站点 → 我的题库（按 X-Owner-Token 隔离）
+添加问答 → PDF 浏览器抽字 → DeepSeek 出题 → MySQL 落库
+答题 / 退出 → 写入 quiz_progress
+继续 → 读取 progress 从断点恢复
+重新作答 → 清空 progress
 ```
 
-## 模块职责
+## 分层（后端）
 
-| 模块 | 职责 | 不负责 |
-|------|------|--------|
-| frontend | 上传、抽字、答题 UI | 保存 API Key、调 DeepSeek |
-| backend | 藏 Key、调模型、规范化 JSON | PDF 二进制解析 |
-| DeepSeek | 根据文本出题 | 持久化 |
+```text
+Controller
+  → Service 接口 / ServiceImpl
+    → Dao 接口 / DaoImpl
+      → Mapper 接口 + Mapper XML（真正 SQL）
+```
 
-## 为何前后端分离
 
-- Key 不能进前端打包产物
-- 前端可继续用 Vue 做交互；后端用 Java，方便 IDEA 开发与后续接库
+- 身份 = `owner_token`（前端生成，长期存 localStorage）
+- 不做 IP 识别（同网段会串号）
+- 后续可在同一 token 上绑定用户名/密码
 
-## 配置
+## 表
 
-| 配置项 | 位置 | 说明 |
-|--------|------|------|
-| deepseek.api-key | application-local.yml 或环境变量 | 必填 |
-| deepseek.base-url | application.yml | 默认官方地址 |
-| deepseek.model | application.yml | 默认 deepseek-chat |
-| deepseek.max-text-chars | application.yml | 送模型的最大字符数 |
-| server.port | application.yml | 默认 3001 |
+| 表 | 用途 |
+|----|------|
+| quiz_sets | 题库元数据 |
+| questions | 题目 |
+| quiz_progress | 每用户每套题的进度与已答 JSON |
 
-## 与下一版的关系
+当前不存 PDF 原文，只存题目。
 
-下一版若要做「一次解析、永久复用」，建议在后端增加：
+## 本机部署注意
 
-1. 对规范化文本做 hash
-2. 命中则直接读库中的 questions
-3. 未命中再调 DeepSeek 并落库
-
-当前版本有意不做数据库，先把闭环跑通。
+前端 `localhost:5173` 代理到本机 `3001`。仅本机使用时无需改 API 基址。  
+若以后局域网分享，需让后端对局域网可访问，并调整前端 API 地址。
