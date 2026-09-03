@@ -7,6 +7,7 @@ public class QuizProgress {
 
   private Long id;
   private String ownerToken;
+  private Long userId;
   private Long quizSetId;
   private int currentIndex;
   private String answersJson;
@@ -26,6 +27,14 @@ public class QuizProgress {
 
   public void setOwnerToken(String ownerToken) {
     this.ownerToken = ownerToken;
+  }
+
+  public Long getUserId() {
+    return userId;
+  }
+
+  public void setUserId(Long userId) {
+    this.userId = userId;
   }
 
   public Long getQuizSetId() {

@@ -10,7 +10,13 @@ public interface QuizSetDao {
 
   List<QuizSet> selectByOwnerToken(String ownerToken);
 
+  List<QuizSet> selectByUserId(Long userId);
+
   QuizSet selectByIdAndOwnerToken(Long id, String ownerToken);
+
+  QuizSet selectByIdAndUserId(Long id, Long userId);
+
+  int bindUserForOwner(String ownerToken, Long userId);
 
   int deleteById(Long id);
 }

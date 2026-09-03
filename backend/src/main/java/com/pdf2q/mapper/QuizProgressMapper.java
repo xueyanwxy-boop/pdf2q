@@ -12,15 +12,28 @@ public interface QuizProgressMapper {
   QuizProgress selectByOwnerAndQuizSet(
       @Param("ownerToken") String ownerToken, @Param("quizSetId") Long quizSetId);
 
+  QuizProgress selectByUserAndQuizSet(
+      @Param("userId") Long userId, @Param("quizSetId") Long quizSetId);
+
   List<QuizProgress> selectByOwnerAndQuizSetIds(
       @Param("ownerToken") String ownerToken, @Param("quizSetIds") List<Long> quizSetIds);
+
+  List<QuizProgress> selectByUserAndQuizSetIds(
+      @Param("userId") Long userId, @Param("quizSetIds") List<Long> quizSetIds);
 
   int insert(QuizProgress progress);
 
   int update(QuizProgress progress);
 
+  int bindUserForOwner(@Param("ownerToken") String ownerToken, @Param("userId") Long userId);
+
   int deleteByOwnerAndQuizSet(
       @Param("ownerToken") String ownerToken, @Param("quizSetId") Long quizSetId);
+
+  int deleteByUserAndQuizSet(@Param("userId") Long userId, @Param("quizSetId") Long quizSetId);
+
+  int deleteOwnerProgressWhenUserExists(
+      @Param("ownerToken") String ownerToken, @Param("userId") Long userId);
 
   int deleteByQuizSetId(@Param("quizSetId") Long quizSetId);
 }

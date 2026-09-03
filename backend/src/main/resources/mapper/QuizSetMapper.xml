@@ -6,28 +6,48 @@
   <resultMap id="QuizSetMap" type="com.pdf2q.domain.QuizSet">
     <id property="id" column="id"/>
     <result property="ownerToken" column="owner_token"/>
+    <result property="userId" column="user_id"/>
     <result property="title" column="title"/>
     <result property="questionCount" column="question_count"/>
     <result property="createdAt" column="created_at"/>
   </resultMap>
 
   <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-    INSERT INTO quiz_sets (owner_token, title, question_count, created_at)
-    VALUES (#{ownerToken}, #{title}, #{questionCount}, #{createdAt})
+    INSERT INTO quiz_sets (owner_token, user_id, title, question_count, created_at)
+    VALUES (#{ownerToken}, #{userId}, #{title}, #{questionCount}, #{createdAt})
   </insert>
 
   <select id="selectByOwnerToken" resultMap="QuizSetMap">
-    SELECT id, owner_token, title, question_count, created_at
+    SELECT id, owner_token, user_id, title, question_count, created_at
     FROM quiz_sets
     WHERE owner_token = #{ownerToken}
     ORDER BY created_at DESC
   </select>
 
+  <select id="selectByUserId" resultMap="QuizSetMap">
+    SELECT id, owner_token, user_id, title, question_count, created_at
+    FROM quiz_sets
+    WHERE user_id = #{userId}
+    ORDER BY created_at DESC
+  </select>
+
   <select id="selectByIdAndOwnerToken" resultMap="QuizSetMap">
-    SELECT id, owner_token, title, question_count, created_at
+    SELECT id, owner_token, user_id, title, question_count, created_at
     FROM quiz_sets
     WHERE id = #{id} AND owner_token = #{ownerToken}
   </select>
+
+  <select id="selectByIdAndUserId" resultMap="QuizSetMap">
+    SELECT id, owner_token, user_id, title, question_count, created_at
+    FROM quiz_sets
+    WHERE id = #{id} AND user_id = #{userId}
+  </select>
+
+  <update id="bindUserForOwner">
+    UPDATE quiz_sets
+    SET user_id = #{userId}
+    WHERE owner_token = #{ownerToken} AND user_id IS NULL
+  </update>
 
   <delete id="deleteById">
     DELETE FROM quiz_sets WHERE id = #{id}

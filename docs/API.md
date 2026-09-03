@@ -91,7 +91,16 @@ X-Owner-Token: <浏览器 localStorage 中的 UUID>
 
 仅出题不落库，请求体与创建题库类似：`{ "text", "singleCount", "multipleCount", "judgeCount" }`。正式流程请用 `POST /api/quiz-sets`。
 
-## 错误格式
+## 云端账号（可选）
+
+- `POST /api/auth/register` `{ phone, password, nickname }`
+- `POST /api/auth/login` `{ phone, password }`
+- `POST /api/auth/logout`（Bearer）
+- `PUT /api/auth/nickname`（Bearer）`{ "nickname": "新昵称" }` → `{ "nickname": "新昵称" }`（2–16 字，允许重名）
+- `POST /api/cloud/sync`（Bearer + X-Owner-Token）：本地题库绑定到账号；进度以云端已有为准
+
+登录后题库列表按 `user_id` 查询。昵称允许重复；手机号唯一。
+
 
 ```json
 { "error": "说明" }

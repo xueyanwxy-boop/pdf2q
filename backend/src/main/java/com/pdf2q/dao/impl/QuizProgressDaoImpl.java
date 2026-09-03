@@ -23,11 +23,24 @@ public class QuizProgressDaoImpl implements QuizProgressDao {
   }
 
   @Override
+  public QuizProgress selectByUserAndQuizSet(Long userId, Long quizSetId) {
+    return quizProgressMapper.selectByUserAndQuizSet(userId, quizSetId);
+  }
+
+  @Override
   public List<QuizProgress> selectByOwnerAndQuizSetIds(String ownerToken, List<Long> quizSetIds) {
     if (quizSetIds == null || quizSetIds.isEmpty()) {
       return Collections.emptyList();
     }
     return quizProgressMapper.selectByOwnerAndQuizSetIds(ownerToken, quizSetIds);
+  }
+
+  @Override
+  public List<QuizProgress> selectByUserAndQuizSetIds(Long userId, List<Long> quizSetIds) {
+    if (quizSetIds == null || quizSetIds.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return quizProgressMapper.selectByUserAndQuizSetIds(userId, quizSetIds);
   }
 
   @Override
@@ -41,8 +54,23 @@ public class QuizProgressDaoImpl implements QuizProgressDao {
   }
 
   @Override
+  public int bindUserForOwner(String ownerToken, Long userId) {
+    return quizProgressMapper.bindUserForOwner(ownerToken, userId);
+  }
+
+  @Override
   public int deleteByOwnerAndQuizSet(String ownerToken, Long quizSetId) {
     return quizProgressMapper.deleteByOwnerAndQuizSet(ownerToken, quizSetId);
+  }
+
+  @Override
+  public int deleteByUserAndQuizSet(Long userId, Long quizSetId) {
+    return quizProgressMapper.deleteByUserAndQuizSet(userId, quizSetId);
+  }
+
+  @Override
+  public int deleteOwnerProgressWhenUserExists(String ownerToken, Long userId) {
+    return quizProgressMapper.deleteOwnerProgressWhenUserExists(ownerToken, userId);
   }
 
   @Override

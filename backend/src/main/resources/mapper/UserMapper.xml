@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdf2q.mapper.UserMapper">
+
+  <resultMap id="UserMap" type="com.pdf2q.domain.User">
+    <id property="id" column="id"/>
+    <result property="phone" column="phone"/>
+    <result property="passwordHash" column="password_hash"/>
+    <result property="nickname" column="nickname"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <resultMap id="TokenMap" type="com.pdf2q.domain.UserToken">
+    <id property="token" column="token"/>
+    <result property="userId" column="user_id"/>
+    <result property="expiresAt" column="expires_at"/>
+  </resultMap>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    INSERT INTO users (phone, password_hash, nickname, created_at)
+    VALUES (#{phone}, #{passwordHash}, #{nickname}, #{createdAt})
+  </insert>
+
+  <select id="selectByPhone" resultMap="UserMap">
+    SELECT id, phone, password_hash, nickname, created_at
+    FROM users WHERE phone = #{phone}
+  </select>
+
+  <select id="selectById" resultMap="UserMap">
+    SELECT id, phone, password_hash, nickname, created_at
+    FROM users WHERE id = #{id}
+  </select>
+
+  <update id="updateNickname">
+    UPDATE users SET nickname = #{nickname} WHERE id = #{id}
+  </update>
+
+  <insert id="insertToken">
+    INSERT INTO user_tokens (token, user_id, expires_at)
+    VALUES (#{token}, #{userId}, #{expiresAt})
+  </insert>
+
+  <select id="selectToken" resultMap="TokenMap">
+    SELECT token, user_id, expires_at FROM user_tokens WHERE token = #{token}
+  </select>
+
+  <delete id="deleteToken">
+    DELETE FROM user_tokens WHERE token = #{token}
+  </delete>
+
+  <delete id="deleteExpiredTokens">
+    DELETE FROM user_tokens WHERE expires_at &lt; #{now}
+  </delete>
+</mapper>

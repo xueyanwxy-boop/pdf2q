@@ -55,16 +55,15 @@ public class QuizSetServiceImpl implements QuizSetService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<QuizSetSummary> list(String ownerToken) {
-    List<QuizSet> sets = quizSetDao.selectByOwnerToken(ownerToken);
+  public List<QuizSetSummary> list(String ownerToken, Long userId) {
+    List<QuizSet> sets = userId != null
+        ? quizSetDao.selectByUserId(userId)
+        : quizSetDao.selectByOwnerToken(ownerToken);
     if (sets.isEmpty()) {
       return List.of();
     }
     List<Long> ids = sets.stream().map(QuizSet::getId).toList();
-    Map<Long, QuizProgress> progressMap = quizProgressDao
-        .selectByOwnerAndQuizSetIds(ownerToken, ids)
-        .stream()
-        .collect(Collectors.toMap(QuizProgress::getQuizSetId, Function.identity(), (a, b) -> a));
+    Map<Long, QuizProgress> progressMap = loadProgressMap(ownerToken, userId, ids);
 
     List<QuizSetSummary> result = new ArrayList<>();
     for (QuizSet set : sets) {
@@ -87,7 +86,7 @@ public class QuizSetServiceImpl implements QuizSetService {
 
   @Override
   @Transactional
-  public QuizSetDetail create(String ownerToken, CreateQuizSetRequest request) {
+  public QuizSetDetail create(String ownerToken, Long userId, CreateQuizSetRequest request) {
     int single = request.getSingleCount() == null ? 0 : request.getSingleCount();
     int multiple = request.getMultipleCount() == null ? 0 : request.getMultipleCount();
     int judge = request.getJudgeCount() == null ? 0 : request.getJudgeCount();
@@ -96,6 +95,7 @@ public class QuizSetServiceImpl implements QuizSetService {
 
     QuizSet set = new QuizSet();
     set.setOwnerToken(ownerToken);
+    set.setUserId(userId);
     set.setTitle(request.getTitle().trim());
     set.setQuestionCount(generated.size());
     set.setCreatedAt(Instant.now());
@@ -123,32 +123,36 @@ public class QuizSetServiceImpl implements QuizSetService {
 
   @Override
   @Transactional(readOnly = true)
-  public QuizSetDetail get(String ownerToken, Long id) {
-    QuizSet set = requireOwned(ownerToken, id);
+  public QuizSetDetail get(String ownerToken, Long userId, Long id) {
+    QuizSet set = requireOwned(ownerToken, userId, id);
     List<Question> questions = questionDao.selectByQuizSetId(id);
-    QuizProgress progress = quizProgressDao.selectByOwnerAndQuizSet(ownerToken, id);
+    QuizProgress progress = findProgress(ownerToken, userId, id);
     return toDetail(set, questions, toProgressDto(set.getQuestionCount(), progress));
   }
 
   @Override
   @Transactional
-  public ProgressDto saveProgress(String ownerToken, Long id, SaveProgressRequest request) {
-    QuizSet set = requireOwned(ownerToken, id);
+  public ProgressDto saveProgress(
+      String ownerToken, Long userId, Long id, SaveProgressRequest request) {
+    QuizSet set = requireOwned(ownerToken, userId, id);
     if (request.getCurrentIndex() >= set.getQuestionCount()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "currentIndex out of range");
     }
 
-    QuizProgress progress = quizProgressDao.selectByOwnerAndQuizSet(ownerToken, id);
+    QuizProgress progress = findProgress(ownerToken, userId, id);
     Instant now = Instant.now();
     if (progress == null) {
       progress = new QuizProgress();
       progress.setOwnerToken(ownerToken);
+      progress.setUserId(userId);
       progress.setQuizSetId(id);
       progress.setCurrentIndex(request.getCurrentIndex());
       progress.setAnswersJson(writeAnswers(request.getAnswers()));
       progress.setUpdatedAt(now);
       quizProgressDao.insert(progress);
     } else {
+      progress.setOwnerToken(ownerToken);
+      progress.setUserId(userId != null ? userId : progress.getUserId());
       progress.setCurrentIndex(request.getCurrentIndex());
       progress.setAnswersJson(writeAnswers(request.getAnswers()));
       progress.setUpdatedAt(now);
@@ -159,23 +163,61 @@ public class QuizSetServiceImpl implements QuizSetService {
 
   @Override
   @Transactional
-  public ProgressDto resetProgress(String ownerToken, Long id) {
-    requireOwned(ownerToken, id);
+  public ProgressDto resetProgress(String ownerToken, Long userId, Long id) {
+    requireOwned(ownerToken, userId, id);
+    if (userId != null) {
+      quizProgressDao.deleteByUserAndQuizSet(userId, id);
+    }
     quizProgressDao.deleteByOwnerAndQuizSet(ownerToken, id);
     return emptyProgress();
   }
 
   @Override
   @Transactional
-  public void delete(String ownerToken, Long id) {
-    requireOwned(ownerToken, id);
+  public void delete(String ownerToken, Long userId, Long id) {
+    requireOwned(ownerToken, userId, id);
     quizProgressDao.deleteByQuizSetId(id);
     questionDao.deleteByQuizSetId(id);
     quizSetDao.deleteById(id);
   }
 
-  private QuizSet requireOwned(String ownerToken, Long id) {
-    QuizSet set = quizSetDao.selectByIdAndOwnerToken(id, ownerToken);
+  private Map<Long, QuizProgress> loadProgressMap(String ownerToken, Long userId, List<Long> ids) {
+    if (userId != null) {
+      // 云端进度优先：先取 user 维度，再补 owner 维度缺失项
+      Map<Long, QuizProgress> byUser = quizProgressDao.selectByUserAndQuizSetIds(userId, ids)
+          .stream()
+          .collect(Collectors.toMap(QuizProgress::getQuizSetId, Function.identity(), (a, b) -> a));
+      Map<Long, QuizProgress> byOwner = quizProgressDao.selectByOwnerAndQuizSetIds(ownerToken, ids)
+          .stream()
+          .collect(Collectors.toMap(QuizProgress::getQuizSetId, Function.identity(), (a, b) -> a));
+      for (Map.Entry<Long, QuizProgress> e : byOwner.entrySet()) {
+        byUser.putIfAbsent(e.getKey(), e.getValue());
+      }
+      return byUser;
+    }
+    return quizProgressDao.selectByOwnerAndQuizSetIds(ownerToken, ids)
+        .stream()
+        .collect(Collectors.toMap(QuizProgress::getQuizSetId, Function.identity(), (a, b) -> a));
+  }
+
+  private QuizProgress findProgress(String ownerToken, Long userId, Long quizSetId) {
+    if (userId != null) {
+      QuizProgress cloud = quizProgressDao.selectByUserAndQuizSet(userId, quizSetId);
+      if (cloud != null) {
+        return cloud;
+      }
+    }
+    return quizProgressDao.selectByOwnerAndQuizSet(ownerToken, quizSetId);
+  }
+
+  private QuizSet requireOwned(String ownerToken, Long userId, Long id) {
+    QuizSet set = null;
+    if (userId != null) {
+      set = quizSetDao.selectByIdAndUserId(id, userId);
+    }
+    if (set == null) {
+      set = quizSetDao.selectByIdAndOwnerToken(id, ownerToken);
+    }
     if (set == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Quiz set not found");
     }

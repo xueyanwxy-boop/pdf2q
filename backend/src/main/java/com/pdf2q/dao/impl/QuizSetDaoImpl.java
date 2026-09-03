@@ -27,8 +27,23 @@ public class QuizSetDaoImpl implements QuizSetDao {
   }
 
   @Override
+  public List<QuizSet> selectByUserId(Long userId) {
+    return quizSetMapper.selectByUserId(userId);
+  }
+
+  @Override
   public QuizSet selectByIdAndOwnerToken(Long id, String ownerToken) {
     return quizSetMapper.selectByIdAndOwnerToken(id, ownerToken);
+  }
+
+  @Override
+  public QuizSet selectByIdAndUserId(Long id, Long userId) {
+    return quizSetMapper.selectByIdAndUserId(id, userId);
+  }
+
+  @Override
+  public int bindUserForOwner(String ownerToken, Long userId) {
+    return quizSetMapper.bindUserForOwner(ownerToken, userId);
   }
 
   @Override

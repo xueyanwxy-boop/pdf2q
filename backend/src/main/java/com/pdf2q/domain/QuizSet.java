@@ -7,6 +7,8 @@ public class QuizSet {
 
   private Long id;
   private String ownerToken;
+  /** 云端账号 id；未登录本地题为 null */
+  private Long userId;
   private String title;
   private int questionCount;
   private Instant createdAt;
@@ -25,6 +27,14 @@ public class QuizSet {
 
   public void setOwnerToken(String ownerToken) {
     this.ownerToken = ownerToken;
+  }
+
+  public Long getUserId() {
+    return userId;
+  }
+
+  public void setUserId(Long userId) {
+    this.userId = userId;
   }
 
   public String getTitle() {

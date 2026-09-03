@@ -13,7 +13,13 @@ public interface QuizSetMapper {
 
   List<QuizSet> selectByOwnerToken(@Param("ownerToken") String ownerToken);
 
+  List<QuizSet> selectByUserId(@Param("userId") Long userId);
+
   QuizSet selectByIdAndOwnerToken(@Param("id") Long id, @Param("ownerToken") String ownerToken);
+
+  QuizSet selectByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
+
+  int bindUserForOwner(@Param("ownerToken") String ownerToken, @Param("userId") Long userId);
 
   int deleteById(@Param("id") Long id);
 }
